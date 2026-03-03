@@ -1,28 +1,27 @@
 {
   "name": "@dirtroad/skale-cli",
-  "version": "0.1.0",
+  "version": "0.2.0",
+  "type": "module",
   "private": false,
   "description": "SKALE Network CLI Tool for developers and chain owners",
   "scripts": {
-  	"dev": "tsup src/index.ts --watch",
-	"build": "tsup",
-	"start": "node dist/index.js"
+    "dev": "bun run src/index.ts",
+    "build": "bun build src/index.ts --compile --outfile dist/skale --target bun",
+    "start": "./dist/skale"
   },
   "bin": {
-	  "skale": "dist/index.mjs"
+    "skale": "dist/skale"
   },
   "keywords": ["skale", "web3", "blockchain", "cli", "dev", "chain"],
   "author": "Sawyer Cutler <sawyer@dirtroad.dev>",
   "license": "MIT",
   "dependencies": {
-    "chalk": "^5.6.0",
-    "commander": "^14.0.0",
-    "ethers": "^6.15.0"
+    "ethers": "^6.16.0",
+    "incur": "^0.1.12",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@types/commander": "^2.12.0",
-    "@types/node": "^24.3.0",
-    "tsup": "^8.5.0",
-    "typescript": "^5.9.2"
+    "@types/bun": "^1.2.5",
+    "typescript": "^5.9.3"
   }
 }

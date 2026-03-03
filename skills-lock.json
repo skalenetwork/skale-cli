@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "incur": {
+      "source": "wevm/incur",
+      "sourceType": "github",
+      "computedHash": "70f4ab0d2616e34bee5b8700cfdc87e300d4bbd432f24a178fd1022c3d4c7821"
+    }
+  }
+}

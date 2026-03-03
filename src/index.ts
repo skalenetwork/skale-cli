@@ -1,27 +1,20 @@
-import { Command } from 'commander';
-import chalk from 'chalk';
-import { isAddressWhitelisted } from './configController/isAddressWhitelisted';
+#!/usr/bin/env node
+import { Cli } from "incur"
+import { whitelist } from "./commands/whitelist.js"
+import { read } from "./commands/read.js"
+import { skl } from "./commands/skl.js"
+import { ima } from "./commands/ima.js"
+import { manager } from "./commands/manager.js"
 
-const program = new Command();
+const cli = Cli
+  .create("skale", {
+    description: "SKALE Network CLI - read contract data from SKALE chains and Ethereum",
+    version: "0.2.0",
+  })
+  .command(whitelist)
+  .command(read)
+  .command(skl)
+  .command(ima)
+  .command(manager)
 
-program
-	.name('skale')
-	.description('A simple CLI to greet someone')
-	.version('1.0.0');
-
-isAddressWhitelisted(program);
-
-// program
-// 	.command('hello <name>')
-// 	.description('Greet a person by name')
-// 	.option('-u, --uppercase', 'Uppercase the greeting')
-// 	.action((name: string, options: { uppercase?: boolean }) => {
-// 		let message = `Hello, ${name}!`;
-// 		if (options.uppercase) {
-// 			message = message.toUpperCase();
-// 		}
-// 		console.log(chalk.green(message));
-// 	});
-
-program.parse();
-
+cli.serve()
