@@ -16,6 +16,7 @@
   "author": "Sawyer Cutler <sawyer@dirtroad.dev>",
   "license": "MIT",
   "dependencies": {
+    "@skalenetwork/bite": "^0.7.2",
     "ethers": "^6.16.0",
     "incur": "^0.1.12",
     "zod": "^4.3.6"

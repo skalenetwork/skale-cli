@@ -3,9 +3,9 @@ import { ethers } from "ethers"
 import { ethereumNetworks, type EthereumNetwork } from "../chains.js"
 import { getEthereumContract, createContractInstance } from "../contracts/index.js"
 
-export const skl = Cli
-  .create("skl", {
-    description: "SKL token commands",
+export const token = Cli
+  .create("token", {
+    description: "Token commands",
   })
   .command("info", {
     description: "Get SKL token information",
@@ -46,7 +46,7 @@ export const skl = Cli
       network: z.enum(["mainnet"]).default("mainnet").describe("Ethereum network"),
     }),
     examples: [
-      { command: "skl balance 0x...", description: "Get SKL balance for address" },
+      { command: "token balance 0x...", description: "Get SKL balance for address" },
     ],
     async run(c) {
       const { address } = c.args

@@ -5,9 +5,9 @@ import { getSkaleContract, createContractInstance } from "../contracts/index.js"
 
 const chainEnum = z.enum(skaleChainKeys as [string, ...string[]])
 
-export const whitelist = Cli
-  .create("whitelist", {
-    description: "Check if an Ethereum address is whitelisted on a SKALE chain",
+export const access = Cli
+  .create("access", {
+    description: "Access control commands",
     args: z.object({
       address: z.string().describe("Ethereum address to check"),
     }),
@@ -15,7 +15,7 @@ export const whitelist = Cli
       chain: chainEnum.describe("SKALE chain name"),
     }),
     examples: [
-      { command: "whitelist 0x... --chain europa", description: "Check if address is whitelisted on Europa" },
+      { command: "access 0x... --chain europa", description: "Check if address is whitelisted on Europa" },
     ],
     async run(c) {
       const { address } = c.args

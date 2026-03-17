@@ -22,6 +22,10 @@ export const skaleChains = {
     rpcUrl: `${MAINNET_RPC_URL_BASE}/fussy-smoggy-megrez`,
     name: "StrayShot",
   },
+  base: {
+    rpcUrl: "https://skale-base.skalenodes.com/v1/base",
+    name: "SKALE Base",
+  },
   "calypso-testnet": {
     rpcUrl: `${TESTNET_RPC_URL_BASE}/giant-half-dual-testnet`,
     name: "Calypso Testnet",
@@ -37,6 +41,10 @@ export const skaleChains = {
   "titan-testnet": {
     rpcUrl: `${TESTNET_RPC_URL_BASE}/aware-fake-trim-testnet`,
     name: "Titan Testnet",
+  },
+  "base-testnet": {
+    rpcUrl: "https://base-sepolia-testnet.skalenodes.com/v1/base-testnet",
+    name: "SKALE Base Testnet",
   },
 } as const
 
