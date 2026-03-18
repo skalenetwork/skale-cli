@@ -1,12 +1,12 @@
 import { Cli, z } from "incur"
-import { ethers } from "ethers"
+import { createPublicClient, http, type PublicClient } from "viem"
 import { skaleChains, skaleChainKeys, type SkaleChain } from "../chains.js"
 
 const skaleChainEnum = z.enum(skaleChainKeys as [string, ...string[]])
 
-const skaleProvider = (chain: SkaleChain) => {
+const skaleProvider = (chain: SkaleChain): PublicClient => {
   const chainConfig = skaleChains[chain]
-  return new ethers.JsonRpcProvider(chainConfig.rpcUrl)
+  return createPublicClient({ transport: http(chainConfig.rpcUrl) })
 }
 
 export const bite = Cli
@@ -53,8 +53,8 @@ export const bite = Cli
     async run(c) {
       const { chain, txhash } = c.options
 
-      const provider = skaleProvider(chain as SkaleChain)
-      const tx = await provider.getTransaction(txhash)
+      const client = skaleProvider(chain as SkaleChain)
+      const tx = await client.getTransaction({ hash: txhash })
 
       if (!tx) {
         return c.error({
@@ -75,7 +75,7 @@ export const bite = Cli
           from: tx.from,
           to: tx.to,
           value: tx.value.toString(),
-          data: tx.data,
+          data: tx.input,
           chainId: chain,
         },
       })

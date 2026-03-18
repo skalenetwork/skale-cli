@@ -1,5 +1,5 @@
 import { Cli, z } from "incur"
-import { ethers } from "ethers"
+import { createPublicClient, http, isAddress, formatEther, type PublicClient } from "viem"
 import { ethereumNetworks, type EthereumNetwork } from "../chains.js"
 import { getEthereumContract, createContractInstance } from "../contracts/index.js"
 
@@ -15,15 +15,15 @@ export const token = Cli
     async run(c) {
       const { network } = c.options
       const networkConfig = ethereumNetworks[network as EthereumNetwork]
-      const provider = new ethers.JsonRpcProvider(networkConfig.rpcUrl)
+      const client = createPublicClient({ transport: http(networkConfig.rpcUrl) })
       const contractConfig = getEthereumContract(network as EthereumNetwork, "sklToken")
-      const contract = createContractInstance(provider, contractConfig)
+      const contract = createContractInstance(client, contractConfig)
 
       const [name, symbol, decimals, totalSupply] = await Promise.all([
-        contract.name(),
-        contract.symbol(),
-        contract.decimals(),
-        contract.totalSupply(),
+        contract.read.name(),
+        contract.read.symbol(),
+        contract.read.decimals(),
+        contract.read.totalSupply(),
       ])
 
       return c.ok({
@@ -52,7 +52,7 @@ export const token = Cli
       const { address } = c.args
       const { network } = c.options
 
-      if (!ethers.isAddress(address)) {
+      if (!isAddress(address)) {
         return c.error({
           code: "INVALID_ADDRESS",
           message: "Invalid Ethereum address format",
@@ -60,13 +60,16 @@ export const token = Cli
       }
 
       const networkConfig = ethereumNetworks[network as EthereumNetwork]
-      const provider = new ethers.JsonRpcProvider(networkConfig.rpcUrl)
+      const client = createPublicClient({ transport: http(networkConfig.rpcUrl) })
       const contractConfig = getEthereumContract(network as EthereumNetwork, "sklToken")
-      const contract = createContractInstance(provider, contractConfig)
+      const contract = createContractInstance(client, contractConfig)
 
-      const balance = await contract.balanceOf(address)
-      const decimals = await contract.decimals()
-      const formatted = ethers.formatUnits(balance, decimals)
+      const [balance, decimals] = await Promise.all([
+        contract.read.balanceOf([address]),
+        contract.read.decimals(),
+      ])
+
+      const formatted = formatEther(balance)
 
       return c.ok({
         address,

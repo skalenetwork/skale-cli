@@ -1,6 +1,6 @@
 {
-  "name": "@dirtroad/skale-cli",
-  "version": "0.2.0",
+  "name": "@skalenetwork/cli",
+  "version": "0.1.0",
   "type": "module",
   "private": false,
   "description": "SKALE Network CLI Tool for developers and chain owners",
@@ -17,8 +17,8 @@
   "license": "MIT",
   "dependencies": {
     "@skalenetwork/bite": "^0.7.2",
-    "ethers": "^6.16.0",
     "incur": "^0.1.12",
+    "viem": "^2.22.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {

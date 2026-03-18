@@ -1,5 +1,5 @@
 import { Cli, z } from "incur"
-import { ethers } from "ethers"
+import { createPublicClient, http, isAddress, type PublicClient } from "viem"
 import { skaleChains, skaleChainKeys, type SkaleChain } from "../chains.js"
 import { getSkaleContract, createContractInstance } from "../contracts/index.js"
 
@@ -21,7 +21,7 @@ export const access = Cli
       const { address } = c.args
       const { chain } = c.options
 
-      if (!ethers.isAddress(address)) {
+      if (!isAddress(address)) {
         return c.error({
           code: "INVALID_ADDRESS",
           message: "Invalid Ethereum address format",
@@ -29,11 +29,11 @@ export const access = Cli
       }
 
       const chainConfig = skaleChains[chain as SkaleChain]
-      const provider = new ethers.JsonRpcProvider(chainConfig.rpcUrl)
+      const client: PublicClient = createPublicClient({ transport: http(chainConfig.rpcUrl) })
       const contractConfig = getSkaleContract("configController")
-      const contract = createContractInstance(provider, contractConfig)
+      const contract = createContractInstance(client, contractConfig)
 
-      const isWhitelisted = await contract.isAddressWhitelisted(address)
+      const isWhitelisted = await contract.read.isAddressWhitelisted([address])
 
       return c.ok({
         address,

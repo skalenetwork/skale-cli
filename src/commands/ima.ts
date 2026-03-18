@@ -1,8 +1,9 @@
 import { Cli, z } from "incur"
-import { ethers } from "ethers"
+import { createPublicClient, http, type PublicClient } from "viem"
 import { skaleChains, ethereumNetworks, type SkaleChain, type EthereumNetwork } from "../chains.js"
 import { getSkaleContract, getEthereumContract, createContractInstance } from "../contracts/index.js"
 import { skaleChainKeys, ethereumNetworkKeys } from "../chains.js"
+import type { Abi } from "viem"
 
 const skaleChainEnum = z.enum(skaleChainKeys as [string, ...string[]])
 const ethereumNetworkEnum = z.enum(ethereumNetworkKeys as [string, ...string[]])
@@ -31,24 +32,24 @@ export const ima = Cli
         })
       }
 
-      let contractConfig: { address: string; abi: ethers.InterfaceAbi }
-      let provider: ethers.JsonRpcProvider
+      let contractConfig: { address: string; abi: Abi }
+      let client: PublicClient
       let targetName: string
 
       if (chain) {
         const chainConfig = skaleChains[chain as SkaleChain]
-        provider = new ethers.JsonRpcProvider(chainConfig.rpcUrl)
+        client = createPublicClient({ transport: http(chainConfig.rpcUrl) })
         contractConfig = getSkaleContract("messageProxyForSchain")
         targetName = chainConfig.name
       } else {
         const networkConfig = ethereumNetworks[network as EthereumNetwork]
-        provider = new ethers.JsonRpcProvider(networkConfig.rpcUrl)
+        client = createPublicClient({ transport: http(networkConfig.rpcUrl) })
         contractConfig = getEthereumContract(network as EthereumNetwork, "messageProxy")
         targetName = networkConfig.name
       }
 
-      const contract = createContractInstance(provider, contractConfig)
-      const chainId = await contract.getChainId()
+      const contract = createContractInstance(client, contractConfig)
+      const chainId = await contract.read.getChainId()
 
       return c.ok({
         chainId,
@@ -77,24 +78,24 @@ export const ima = Cli
         })
       }
 
-      let contractConfig: { address: string; abi: ethers.InterfaceAbi }
-      let provider: ethers.JsonRpcProvider
+      let contractConfig: { address: string; abi: Abi }
+      let client: PublicClient
       let targetName: string
 
       if (chain) {
         const chainConfig = skaleChains[chain as SkaleChain]
-        provider = new ethers.JsonRpcProvider(chainConfig.rpcUrl)
+        client = createPublicClient({ transport: http(chainConfig.rpcUrl) })
         contractConfig = getSkaleContract("messageProxyForSchain")
         targetName = chainConfig.name
       } else {
         const networkConfig = ethereumNetworks[network as EthereumNetwork]
-        provider = new ethers.JsonRpcProvider(networkConfig.rpcUrl)
+        client = createPublicClient({ transport: http(networkConfig.rpcUrl) })
         contractConfig = getEthereumContract(network as EthereumNetwork, "messageProxy")
         targetName = networkConfig.name
       }
 
-      const contract = createContractInstance(provider, contractConfig)
-      const chains = await contract.getConnectedChains()
+      const contract = createContractInstance(client, contractConfig)
+      const chains = await contract.read.getConnectedChains()
 
       return c.ok({
         chains,
@@ -121,13 +122,13 @@ export const ima = Cli
       const chainConfig = skaleChains[chain as SkaleChain]
       const networkConfig = ethereumNetworks[network as EthereumNetwork]
 
-      const ethProvider = new ethers.JsonRpcProvider(networkConfig.rpcUrl)
-      const skaleProvider = new ethers.JsonRpcProvider(chainConfig.rpcUrl)
+      const ethClient = createPublicClient({ transport: http(networkConfig.rpcUrl) })
+      const skaleClient = createPublicClient({ transport: http(chainConfig.rpcUrl) })
 
       const tokenManagerConfig = getSkaleContract("tokenManagerERC20")
-      const tokenManager = createContractInstance(skaleProvider, tokenManagerConfig)
+      const tokenManager = createContractInstance(skaleClient, tokenManagerConfig)
 
-      const isTokenRegistered = await tokenManager.isTokenRegistered(token)
+      const isTokenRegistered = await tokenManager.read.isTokenRegistered([token])
       if (!isTokenRegistered) {
         return c.error({
           code: "TOKEN_NOT_REGISTERED",
@@ -135,17 +136,17 @@ export const ima = Cli
         })
       }
 
-      const ethToken = new ethers.Contract(token, tokenManagerConfig.abi, ethProvider)
-      const name = await ethToken.name().catch(() => "Unknown")
-      const symbol = await ethToken.symbol().catch(() => "Unknown")
-      const decimals = await ethToken.decimals().catch(() => 18)
+      const ethToken = createContractInstance(ethClient, { address: token, abi: tokenManagerConfig.abi })
+      const name = await ethToken.read.name().catch(() => "Unknown")
+      const symbol = await ethToken.read.symbol().catch(() => "Unknown")
+      const decimals = await ethToken.read.decimals().catch(() => 18)
 
       const [
-        automaticDeposit,
+        automaticDeploy,
         gasPrice,
       ] = await Promise.all([
-        tokenManager.automaticDeploy().catch(() => false),
-        tokenManager.gasPrice().catch(() => "0"),
+        tokenManager.read.automaticDeploy().catch(() => false),
+        tokenManager.read.gasPrice().catch(() => "0"),
       ])
 
       return c.ok({
@@ -157,7 +158,7 @@ export const ima = Cli
         chainId: chain,
         network: networkConfig.name,
         networkId: network,
-        automaticDeposit,
+        automaticDeposit: automaticDeploy,
         gasPrice,
         tokenManagerAddress: tokenManagerConfig.address,
         messageProxyAddress: tokenManagerConfig.address.replace("D2aAA005", "d2AAa001"),
@@ -177,12 +178,12 @@ export const ima = Cli
       const { chain, token } = c.options
 
       const chainConfig = skaleChains[chain as SkaleChain]
-      const provider = new ethers.JsonRpcProvider(chainConfig.rpcUrl)
+      const client = createPublicClient({ transport: http(chainConfig.rpcUrl) })
 
       const tokenManagerConfig = getSkaleContract("tokenManagerERC20")
-      const tokenManager = createContractInstance(provider, tokenManagerConfig)
+      const tokenManager = createContractInstance(client, tokenManagerConfig)
 
-      const isTokenRegistered = await tokenManager.isTokenRegistered(token)
+      const isTokenRegistered = await tokenManager.read.isTokenRegistered([token])
       if (!isTokenRegistered) {
         return c.error({
           code: "TOKEN_NOT_REGISTERED",
@@ -190,10 +191,10 @@ export const ima = Cli
         })
       }
 
-      const tokenContract = new ethers.Contract(token, tokenManagerConfig.abi, provider)
-      const name = await tokenContract.name().catch(() => "Unknown")
-      const symbol = await tokenContract.symbol().catch(() => "Unknown")
-      const decimals = await tokenContract.decimals().catch(() => 18)
+      const tokenContract = createContractInstance(client, { address: token, abi: tokenManagerConfig.abi })
+      const name = await tokenContract.read.name().catch(() => "Unknown")
+      const symbol = await tokenContract.read.symbol().catch(() => "Unknown")
+      const decimals = await tokenContract.read.decimals().catch(() => 18)
 
       return c.ok({
         token,

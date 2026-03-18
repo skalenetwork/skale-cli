@@ -1,6 +1,6 @@
-import type { ethers } from "ethers"
+import type { Abi } from "viem"
 
 export type ContractConfig = {
   address: string
-  abi: ethers.InterfaceAbi
+  abi: Abi
 }

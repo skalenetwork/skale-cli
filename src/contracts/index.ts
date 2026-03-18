@@ -1,4 +1,4 @@
-import { ethers } from "ethers"
+import { createPublicClient, http, getContract, type PublicClient } from "viem"
 import { ADDRESSES } from "./addresses.js"
 import type { ContractConfig } from "./types.js"
 
@@ -43,8 +43,12 @@ export function getEthereumContract(
 }
 
 export function createContractInstance(
-  provider: ethers.JsonRpcProvider,
+  client: PublicClient,
   config: ContractConfig
-): ethers.Contract {
-  return new ethers.Contract(config.address, config.abi, provider)
+) {
+  return getContract({
+    address: config.address as `0x${string}`,
+    abi: config.abi,
+    client,
+  })
 }

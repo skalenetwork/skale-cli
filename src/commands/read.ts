@@ -1,5 +1,5 @@
 import { Cli, z } from "incur"
-import { ethers } from "ethers"
+import { createPublicClient, http, type PublicClient } from "viem"
 import { skaleChains, skaleChainKeys, ethereumNetworks, ethereumNetworkKeys, type SkaleChain, type EthereumNetwork } from "../chains.js"
 import { getSkaleContract, getEthereumContract, createContractInstance } from "../contracts/index.js"
 
@@ -41,12 +41,12 @@ export const read = Cli
         })
       }
 
-      let contractConfig: { address: string; abi: ethers.InterfaceAbi }
-      let provider: ethers.JsonRpcProvider
+      let contractConfig: { address: string; abi: unknown }
+      let client: PublicClient
 
       if (chain) {
         const chainConfig = skaleChains[chain as SkaleChain]
-        provider = new ethers.JsonRpcProvider(chainConfig.rpcUrl)
+        client = createPublicClient({ transport: http(chainConfig.rpcUrl) })
 
         if (!skaleContractEnum.options.includes(contractName as any)) {
           return c.error({
@@ -57,7 +57,7 @@ export const read = Cli
         contractConfig = getSkaleContract(contractName as "configController" | "messageProxyForSchain" | "tokenManagerERC20")
       } else {
         const networkConfig = ethereumNetworks[network as EthereumNetwork]
-        provider = new ethers.JsonRpcProvider(networkConfig.rpcUrl)
+        client = createPublicClient({ transport: http(networkConfig.rpcUrl) })
 
         if (!ethereumContractEnum.options.includes(contractName as any)) {
           return c.error({
@@ -68,16 +68,15 @@ export const read = Cli
         contractConfig = getEthereumContract(network as EthereumNetwork, contractName as "messageProxy" | "sklToken")
       }
 
-      const contract = createContractInstance(provider, contractConfig)
+      const contract = createContractInstance(client, contractConfig)
 
-      if (!contract[method]) {
+      if (!contract.read[method as keyof typeof contract.read]) {
         return c.error({
           code: "INVALID_METHOD",
-          message: `Method "${method}" not found on contract ${contract}`,
+          message: `Method "${method}" not found on contract`,
         })
       }
 
-      // Parse params (convert string values to appropriate types)
       const parsedParams = params.map(p => {
         if (p === "true") return true
         if (p === "false") return false
@@ -87,7 +86,7 @@ export const read = Cli
       })
 
       try {
-        const result = await contract[method](...parsedParams)
+        const result = await contract.read[method as keyof typeof contract.read](...parsedParams)
         return c.ok({
           contract,
           address: contractConfig.address,
