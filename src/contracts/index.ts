@@ -27,7 +27,7 @@ export function getSkaleContract(name: SkaleContract): ContractConfig {
 }
 
 export function getEthereumContract(
-  network: 'mainnet' | 'holesky',
+  network: 'mainnet' | 'sepolia',
   name: EthereumContract
 ): ContractConfig {
   const networkAddresses = ADDRESSES[network]

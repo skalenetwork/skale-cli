@@ -110,7 +110,7 @@ export const ima = Cli
     description: "Get deposit information for ERC20 tokens",
     options: z.object({
       chain: skaleChainEnum.describe("SKALE chain name"),
-      network: ethereumNetworkEnum.describe("Ethereum network (mainnet or holesky)"),
+      network: ethereumNetworkEnum.describe("Ethereum network (mainnet or sepolia)"),
       token: z.string().regex(/^0x[a-fA-F0-9]{40}$/).describe("Token address on Ethereum"),
     }),
     examples: [

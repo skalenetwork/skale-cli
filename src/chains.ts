@@ -22,8 +22,8 @@ export const skaleChains = {
     rpcUrl: `${MAINNET_RPC_URL_BASE}/fussy-smoggy-megrez`,
     name: "StrayShot",
   },
-  base: {
-    rpcUrl: "https://skale-base.skalenodes.com/v1/base",
+  "skale-base": {
+    rpcUrl: "https://skale-base.skalenodes.com/v1/skale-base",
     name: "SKALE Base",
   },
   "calypso-testnet": {
@@ -42,9 +42,9 @@ export const skaleChains = {
     rpcUrl: `${TESTNET_RPC_URL_BASE}/aware-fake-trim-testnet`,
     name: "Titan Testnet",
   },
-  "base-testnet": {
+  "skale-base-sepolia": {
     rpcUrl: "https://base-sepolia-testnet.skalenodes.com/v1/base-testnet",
-    name: "SKALE Base Testnet",
+    name: "SKALE Base Sepolia",
   },
 } as const
 
@@ -53,9 +53,9 @@ export const ethereumNetworks = {
     rpcUrl: process.env.ETHEREUM_RPC_URL ?? "https://eth.llamarpc.com",
     name: "Ethereum Mainnet",
   },
-  holesky: {
-    rpcUrl: process.env.HOLESKY_RPC_URL ?? "https://ethereum-holesky.publicnode.com",
-    name: "Holesky",
+  sepolia: {
+    rpcUrl: process.env.SEPOLIA_RPC_URL ?? "https://ethereum-sepolia.publicnode.com",
+    name: "Sepolia",
   },
 } as const
 
