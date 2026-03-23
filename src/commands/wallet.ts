@@ -8,7 +8,7 @@ import {
   type PublicClient,
 } from "viem"
 import { privateKeyToAccount } from "viem/accounts"
-import { skaleChains, ethereumNetworks, type SkaleChain, type EthereumNetwork } from "../chains.js"
+import { skaleChains, skaleChainKeys, ethereumNetworks, type SkaleChain, type EthereumNetwork } from "../chains.js"
 import { getEthereumContract, createContractInstance } from "../contracts/index.js"
 
 const ERC20_ABI = [
@@ -61,8 +61,11 @@ export const wallet = Cli
       { command: "wallet balance 0x... --token 0x...", description: "Get token balance" },
     ],
     async run(c) {
-      const { address } = c.args
+      const { address: rawAddress } = c.args
       const { chain, network, token } = c.options
+
+      // Normalize to lowercase first
+      const address = rawAddress.toLowerCase()
 
       if (!isAddress(address)) {
         return c.error({
@@ -70,6 +73,8 @@ export const wallet = Cli
           message: "Invalid Ethereum address format",
         })
       }
+
+      const checksummedAddress = getAddress(address)
 
       let rpcUrl: string
       let chainName: string
@@ -104,7 +109,7 @@ export const wallet = Cli
           client.readContract({
             ...contract,
             functionName: "balanceOf",
-            args: [address],
+            args: [checksummedAddress],
           }),
           client.readContract({
             address: token as `0x${string}`,
@@ -121,7 +126,7 @@ export const wallet = Cli
         ])
 
         return c.ok({
-          address,
+          address: checksummedAddress,
           balance: balance.toString(),
           formatted: formatEther(balance),
           token: {
@@ -134,10 +139,10 @@ export const wallet = Cli
         })
       }
 
-      const balance = await client.getBalance({ address })
+      const balance = await client.getBalance({ address: checksummedAddress })
 
       return c.ok({
-        address,
+        address: checksummedAddress,
         balance: balance.toString(),
         formatted: formatEther(balance),
         chain: chain || network || "mainnet",

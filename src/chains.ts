@@ -23,7 +23,7 @@ export const skaleChains = {
     name: "StrayShot",
   },
   "skale-base": {
-    rpcUrl: "https://skale-base.skalenodes.com/v1/skale-base",
+    rpcUrl: "https://skale-base.skalenodes.com/v1/base",
     name: "SKALE Base",
   },
   "calypso-testnet": {
