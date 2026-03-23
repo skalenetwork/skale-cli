@@ -1,5 +1,5 @@
 import { Cli, z } from "incur"
-import { createPublicClient, http, type PublicClient } from "viem"
+import { createPublicClient, http, type PublicClient, erc20Abi } from "viem"
 import { skaleChains, ethereumNetworks, type SkaleChain, type EthereumNetwork } from "../chains.js"
 import { getSkaleContract, getEthereumContract, createContractInstance } from "../contracts/index.js"
 import { skaleChainKeys, ethereumNetworkKeys } from "../chains.js"
@@ -128,15 +128,15 @@ export const ima = Cli
       const tokenManagerConfig = getSkaleContract("tokenManagerERC20")
       const tokenManager = createContractInstance(skaleClient, tokenManagerConfig)
 
-      const isTokenRegistered = await tokenManager.read.isTokenRegistered([token])
-      if (!isTokenRegistered) {
+      const isTokenAdded = await tokenManager.read.isTokenAdded([token])
+      if (!isTokenAdded) {
         return c.error({
           code: "TOKEN_NOT_REGISTERED",
           message: `Token ${token} is not registered on ${chainConfig.name}`,
         })
       }
 
-      const ethToken = createContractInstance(ethClient, { address: token, abi: tokenManagerConfig.abi })
+      const ethToken = createContractInstance(ethClient, { address: token, abi: erc20Abi })
       const name = await ethToken.read.name().catch(() => "Unknown")
       const symbol = await ethToken.read.symbol().catch(() => "Unknown")
       const decimals = await ethToken.read.decimals().catch(() => 18)
@@ -183,15 +183,15 @@ export const ima = Cli
       const tokenManagerConfig = getSkaleContract("tokenManagerERC20")
       const tokenManager = createContractInstance(client, tokenManagerConfig)
 
-      const isTokenRegistered = await tokenManager.read.isTokenRegistered([token])
-      if (!isTokenRegistered) {
+      const isTokenAdded = await tokenManager.read.isTokenAdded([token])
+      if (!isTokenAdded) {
         return c.error({
           code: "TOKEN_NOT_REGISTERED",
           message: `Token ${token} is not registered on ${chainConfig.name}`,
         })
       }
 
-      const tokenContract = createContractInstance(client, { address: token, abi: tokenManagerConfig.abi })
+      const tokenContract = createContractInstance(client, { address: token, abi: erc20Abi })
       const name = await tokenContract.read.name().catch(() => "Unknown")
       const symbol = await tokenContract.read.symbol().catch(() => "Unknown")
       const decimals = await tokenContract.read.decimals().catch(() => 18)

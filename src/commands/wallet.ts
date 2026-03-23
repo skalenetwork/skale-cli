@@ -38,6 +38,8 @@ function getExplorerUrl(
   return `https://etherscan.io/${type}/${address}`
 }
 
+const skaleChainEnum = z.enum(skaleChainKeys as [string, ...string[]])
+
 export const wallet = Cli
   .create("wallet", {
     description: "Wallet commands",
@@ -48,7 +50,7 @@ export const wallet = Cli
       address: z.string().describe("Ethereum address"),
     }),
     options: z.object({
-      chain: z.enum(["calypso", "europa", "nebula", "titan", "strayshot", "skale-base", "calypso-testnet", "europa-testnet", "nebula-testnet", "titan-testnet", "skale-base-sepolia"]).optional().describe("SKALE chain name"),
+      chain: skaleChainEnum.optional().describe("SKALE chain name"),
       network: z.enum(["mainnet", "sepolia"]).optional().describe("Ethereum network"),
       token: z.string().optional().describe("Token contract address for ERC20 balance"),
     }),
@@ -315,7 +317,7 @@ export const wallet = Cli
       address: z.string().describe("Ethereum address or transaction hash"),
     }),
     options: z.object({
-      chain: z.enum(["calypso", "europa", "nebula", "titan", "strayshot", "skale-base", "calypso-testnet", "europa-testnet", "nebula-testnet", "titan-testnet", "skale-base-sepolia"]).optional().describe("SKALE chain name"),
+      chain: skaleChainEnum.optional().describe("SKALE chain name"),
       network: z.enum(["mainnet", "sepolia"]).optional().describe("Ethereum network"),
       type: z.enum(["address", "tx"]).optional().describe("Type: address or tx (auto-detected)"),
     }),
