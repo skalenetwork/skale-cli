@@ -8,7 +8,7 @@ import {
   type PublicClient,
 } from "viem"
 import { privateKeyToAccount } from "viem/accounts"
-import { skaleChains, ethereumNetworks, type SkaleChain, type EthereumNetwork } from "../chains.js"
+import { skaleChains, skaleChainKeys, ethereumNetworks, type SkaleChain, type EthereumNetwork } from "../chains.js"
 import { getEthereumContract, createContractInstance } from "../contracts/index.js"
 
 const ERC20_ABI = [
@@ -38,6 +38,8 @@ function getExplorerUrl(
   return `https://etherscan.io/${type}/${address}`
 }
 
+const skaleChainEnum = z.enum(skaleChainKeys as [string, ...string[]])
+
 export const wallet = Cli
   .create("wallet", {
     description: "Wallet commands",
@@ -48,7 +50,7 @@ export const wallet = Cli
       address: z.string().describe("Ethereum address"),
     }),
     options: z.object({
-      chain: z.enum(["calypso", "europa", "nebula", "titan", "strayshot", "skale-base", "calypso-testnet", "europa-testnet", "nebula-testnet", "titan-testnet", "skale-base-sepolia"]).optional().describe("SKALE chain name"),
+      chain: skaleChainEnum.optional().describe("SKALE chain name"),
       network: z.enum(["mainnet", "sepolia"]).optional().describe("Ethereum network"),
       token: z.string().optional().describe("Token contract address for ERC20 balance"),
     }),
@@ -59,8 +61,11 @@ export const wallet = Cli
       { command: "wallet balance 0x... --token 0x...", description: "Get token balance" },
     ],
     async run(c) {
-      const { address } = c.args
+      const { address: rawAddress } = c.args
       const { chain, network, token } = c.options
+
+      // Normalize to lowercase first
+      const address = rawAddress.toLowerCase()
 
       if (!isAddress(address)) {
         return c.error({
@@ -68,6 +73,8 @@ export const wallet = Cli
           message: "Invalid Ethereum address format",
         })
       }
+
+      const checksummedAddress = getAddress(address)
 
       let rpcUrl: string
       let chainName: string
@@ -102,7 +109,7 @@ export const wallet = Cli
           client.readContract({
             ...contract,
             functionName: "balanceOf",
-            args: [address],
+            args: [checksummedAddress],
           }),
           client.readContract({
             address: token as `0x${string}`,
@@ -119,7 +126,7 @@ export const wallet = Cli
         ])
 
         return c.ok({
-          address,
+          address: checksummedAddress,
           balance: balance.toString(),
           formatted: formatEther(balance),
           token: {
@@ -132,10 +139,10 @@ export const wallet = Cli
         })
       }
 
-      const balance = await client.getBalance({ address })
+      const balance = await client.getBalance({ address: checksummedAddress })
 
       return c.ok({
-        address,
+        address: checksummedAddress,
         balance: balance.toString(),
         formatted: formatEther(balance),
         chain: chain || network || "mainnet",
@@ -315,7 +322,7 @@ export const wallet = Cli
       address: z.string().describe("Ethereum address or transaction hash"),
     }),
     options: z.object({
-      chain: z.enum(["calypso", "europa", "nebula", "titan", "strayshot", "skale-base", "calypso-testnet", "europa-testnet", "nebula-testnet", "titan-testnet", "skale-base-sepolia"]).optional().describe("SKALE chain name"),
+      chain: skaleChainEnum.optional().describe("SKALE chain name"),
       network: z.enum(["mainnet", "sepolia"]).optional().describe("Ethereum network"),
       type: z.enum(["address", "tx"]).optional().describe("Type: address or tx (auto-detected)"),
     }),

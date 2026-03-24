@@ -1,12 +1,21 @@
 import { Cli, z } from "incur"
-import { createPublicClient, http, type PublicClient } from "viem"
+import { createPublicClient, http, type PublicClient, erc20Abi, getContract } from "viem"
 import { skaleChains, ethereumNetworks, type SkaleChain, type EthereumNetwork } from "../chains.js"
-import { getSkaleContract, getEthereumContract, createContractInstance } from "../contracts/index.js"
 import { skaleChainKeys, ethereumNetworkKeys } from "../chains.js"
-import type { Abi } from "viem"
+import { ADDRESSES } from "../contracts/addresses.js"
+import tokenManagerERC20Abi from "../abis/tokenManagerERC20.abi.json" with { type: "json" }
+import messageProxyAbi from "../abis/messageProxy.abi.json" with { type: "json" }
 
 const skaleChainEnum = z.enum(skaleChainKeys as [string, ...string[]])
 const ethereumNetworkEnum = z.enum(ethereumNetworkKeys as [string, ...string[]])
+
+function createImaContract(client: PublicClient, abi: unknown, address: string) {
+  return getContract({
+    address: address as `0x${string}`,
+    abi: abi as unknown[],
+    client,
+  })
+}
 
 export const ima = Cli
   .create("ima", {
@@ -32,44 +41,56 @@ export const ima = Cli
         })
       }
 
-      let contractConfig: { address: string; abi: Abi }
       let client: PublicClient
       let targetName: string
+      let contractAddress: string
 
       if (chain) {
         const chainConfig = skaleChains[chain as SkaleChain]
         client = createPublicClient({ transport: http(chainConfig.rpcUrl) })
-        contractConfig = getSkaleContract("messageProxyForSchain")
+        contractAddress = ADDRESSES.skale.messageProxyForSchain
         targetName = chainConfig.name
       } else {
         const networkConfig = ethereumNetworks[network as EthereumNetwork]
         client = createPublicClient({ transport: http(networkConfig.rpcUrl) })
-        contractConfig = getEthereumContract(network as EthereumNetwork, "messageProxy")
+        contractAddress = ADDRESSES[network as EthereumNetwork].messageProxy
         targetName = networkConfig.name
       }
 
-      const contract = createContractInstance(client, contractConfig)
-      const chainId = await contract.read.getChainId()
-
-      return c.ok({
-        chainId,
-        target: chain ?? network,
-        targetName,
-        contractAddress: contractConfig.address,
-      })
+      const contract = createImaContract(client, messageProxyAbi, contractAddress)
+      
+      if (chain) {
+        // For sChain, get the schainHash
+        const schainHash = await contract.read.schainHash()
+        return c.ok({
+          schainHash,
+          target: chain,
+          targetName,
+          contractAddress,
+        })
+      } else {
+        // For mainnet, return the network info (no direct chain ID function)
+        return c.ok({
+          target: network,
+          targetName,
+          contractAddress,
+          note: "Mainnet MessageProxy does not have a schainHash function",
+        })
+      }
     },
   })
   .command("connected-chains", {
-    description: "Get connected chains from MessageProxy",
+    description: "Check if a chain is connected to MessageProxy",
     options: z.object({
-      chain: skaleChainEnum.optional().describe("SKALE chain name"),
-      network: ethereumNetworkEnum.optional().describe("Ethereum network"),
+      chain: skaleChainEnum.optional().describe("SKALE chain name (source)"),
+      network: ethereumNetworkEnum.optional().describe("Ethereum network (source)"),
+      "check-chain": z.string().optional().describe("Chain name to check connectivity to (e.g., 'mainnet' or 'europa')"),
     }),
     examples: [
-      { command: "ima connected-chains --chain europa", description: "Get chains connected to Europa" },
+      { command: "ima connected-chains --chain europa --check-chain mainnet", description: "Check if Europa is connected to mainnet" },
     ],
     async run(c) {
-      const { chain, network } = c.options
+      const { chain, network, "check-chain": checkChain } = c.options
 
       if (!chain && !network) {
         return c.error({
@@ -78,31 +99,34 @@ export const ima = Cli
         })
       }
 
-      let contractConfig: { address: string; abi: Abi }
       let client: PublicClient
       let targetName: string
+      let contractAddress: string
 
       if (chain) {
         const chainConfig = skaleChains[chain as SkaleChain]
         client = createPublicClient({ transport: http(chainConfig.rpcUrl) })
-        contractConfig = getSkaleContract("messageProxyForSchain")
+        contractAddress = ADDRESSES.skale.messageProxyForSchain
         targetName = chainConfig.name
       } else {
         const networkConfig = ethereumNetworks[network as EthereumNetwork]
         client = createPublicClient({ transport: http(networkConfig.rpcUrl) })
-        contractConfig = getEthereumContract(network as EthereumNetwork, "messageProxy")
+        contractAddress = ADDRESSES[network as EthereumNetwork].messageProxy
         targetName = networkConfig.name
       }
 
-      const contract = createContractInstance(client, contractConfig)
-      const chains = await contract.read.getConnectedChains()
-
+      const contract = createImaContract(client, messageProxyAbi, contractAddress)
+      
+      // Check connectivity to the specified chain
+      const chainToCheck = checkChain || (chain ? "mainnet" : "europa")
+      const isConnected = await contract.read.isConnectedChain([chainToCheck]).catch(() => false)
+      
       return c.ok({
-        chains,
-        count: chains.length,
-        target: chain ?? network,
-        targetName,
-        contractAddress: contractConfig.address,
+        source: chain ?? network,
+        sourceName: targetName,
+        target: chainToCheck,
+        isConnected,
+        contractAddress,
       })
     },
   })
@@ -125,29 +149,16 @@ export const ima = Cli
       const ethClient = createPublicClient({ transport: http(networkConfig.rpcUrl) })
       const skaleClient = createPublicClient({ transport: http(chainConfig.rpcUrl) })
 
-      const tokenManagerConfig = getSkaleContract("tokenManagerERC20")
-      const tokenManager = createContractInstance(skaleClient, tokenManagerConfig)
+      const tokenManager = createImaContract(skaleClient, tokenManagerERC20Abi, ADDRESSES.skale.tokenManagerERC20)
 
-      const isTokenRegistered = await tokenManager.read.isTokenRegistered([token])
-      if (!isTokenRegistered) {
-        return c.error({
-          code: "TOKEN_NOT_REGISTERED",
-          message: `Token ${token} is not registered on ${chainConfig.name}`,
-        })
-      }
+      const ethToken = { address: token as `0x${string}`, abi: erc20Abi }
+      const name = await ethClient.readContract({ ...ethToken, functionName: "name" }).catch(() => "Unknown")
+      const symbol = await ethClient.readContract({ ...ethToken, functionName: "symbol" }).catch(() => "Unknown")
+      const decimals = await ethClient.readContract({ ...ethToken, functionName: "decimals" }).catch(() => 18)
 
-      const ethToken = createContractInstance(ethClient, { address: token, abi: tokenManagerConfig.abi })
-      const name = await ethToken.read.name().catch(() => "Unknown")
-      const symbol = await ethToken.read.symbol().catch(() => "Unknown")
-      const decimals = await ethToken.read.decimals().catch(() => 18)
+      const automaticDeploy = await tokenManager.read.automaticDeploy().catch(() => false)
 
-      const [
-        automaticDeploy,
-        gasPrice,
-      ] = await Promise.all([
-        tokenManager.read.automaticDeploy().catch(() => false),
-        tokenManager.read.gasPrice().catch(() => "0"),
-      ])
+      const tokenManagerAddress = ADDRESSES.skale.tokenManagerERC20
 
       return c.ok({
         token,
@@ -159,9 +170,8 @@ export const ima = Cli
         network: networkConfig.name,
         networkId: network,
         automaticDeposit: automaticDeploy,
-        gasPrice,
-        tokenManagerAddress: tokenManagerConfig.address,
-        messageProxyAddress: tokenManagerConfig.address.replace("D2aAA005", "d2AAa001"),
+        tokenManagerAddress,
+        messageProxyAddress: tokenManagerAddress.replace("D2aAA005", "d2AAa001"),
       })
     },
   })
@@ -180,21 +190,14 @@ export const ima = Cli
       const chainConfig = skaleChains[chain as SkaleChain]
       const client = createPublicClient({ transport: http(chainConfig.rpcUrl) })
 
-      const tokenManagerConfig = getSkaleContract("tokenManagerERC20")
-      const tokenManager = createContractInstance(client, tokenManagerConfig)
+      const tokenManager = createImaContract(client, tokenManagerERC20Abi, ADDRESSES.skale.tokenManagerERC20)
 
-      const isTokenRegistered = await tokenManager.read.isTokenRegistered([token])
-      if (!isTokenRegistered) {
-        return c.error({
-          code: "TOKEN_NOT_REGISTERED",
-          message: `Token ${token} is not registered on ${chainConfig.name}`,
-        })
-      }
+      const tokenContract = { address: token as `0x${string}`, abi: erc20Abi }
+      const name = await client.readContract({ ...tokenContract, functionName: "name" }).catch(() => "Unknown")
+      const symbol = await client.readContract({ ...tokenContract, functionName: "symbol" }).catch(() => "Unknown")
+      const decimals = await client.readContract({ ...tokenContract, functionName: "decimals" }).catch(() => 18)
 
-      const tokenContract = createContractInstance(client, { address: token, abi: tokenManagerConfig.abi })
-      const name = await tokenContract.read.name().catch(() => "Unknown")
-      const symbol = await tokenContract.read.symbol().catch(() => "Unknown")
-      const decimals = await tokenContract.read.decimals().catch(() => 18)
+      const tokenManagerAddress = ADDRESSES.skale.tokenManagerERC20
 
       return c.ok({
         token,
@@ -203,8 +206,8 @@ export const ima = Cli
         tokenDecimals: decimals,
         chain: chainConfig.name,
         chainId: chain,
-        tokenManagerAddress: tokenManagerConfig.address,
-        messageProxyAddress: tokenManagerConfig.address.replace("D2aAA005", "d2AAa001"),
+        tokenManagerAddress,
+        messageProxyAddress: tokenManagerAddress.replace("D2aAA005", "d2AAa001"),
       })
     },
   })
