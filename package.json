@@ -1,6 +1,6 @@
 {
   "name": "@skalenetwork/cli",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "type": "module",
   "private": false,
   "description": "SKALE Network CLI Tool for developers, chain operators, and agents",
