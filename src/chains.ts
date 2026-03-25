@@ -46,6 +46,10 @@ export const skaleChains = {
     rpcUrl: "https://base-sepolia-testnet.skalenodes.com/v1/base-testnet",
     name: "SKALE Base Sepolia",
   },
+  "skale-bite-sandbox": {
+    rpcUrl: "https://base-sepolia-testnet.skalenodes.com/v1/bite-v2-sandbox",
+    name: "SKALE BITE Sandbox",
+  },
 } as const
 
 export const ethereumNetworks = {

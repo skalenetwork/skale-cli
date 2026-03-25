@@ -45,7 +45,7 @@ This CLI is optimized for AI agents and automated workflows:
 skale chains list --format json
 
 # Read contract data
-skale read --chain europa --address 0x... --abi ./abi.json --method balanceOf --args 0x...
+skale read --chain skale-base --address 0x... --abi ./abi.json --method balanceOf --args 0x...
 ```
 
 ## Quick Start
@@ -55,13 +55,13 @@ skale read --chain europa --address 0x... --abi ./abi.json --method balanceOf --
 skale chains list
 
 # Read contract data
-skale read configController version --chain europa
+skale read configController version --chain skale-base
 
 # Check gas prices
-skale gas price --chain europa
+skale gas price --chain skale-base
 
 # View address on explorer
-skale explorer address 0x... --chain europa
+skale explorer address 0x... --chain skale-base
 ```
 
 ## Global Options
@@ -92,30 +92,33 @@ Aggregate token balances across multiple chains.
 | Option | Type | Required | Description |
 |--------|------|----------|-------------|
 | `--token` | string | No | Token contract address for ERC20 balance |
-| `--chains` | string | No | Comma-separated chain names (e.g., 'europa,titan,mainnet') |
+| `--chains` | string | No | Comma-separated chain names (e.g., 'skale-base,titan,mainnet') |
 | `--value-in` | enum | No | Display values in: USD, EUR, ETH |
 
 **Output:**
 ```json
 {
   "address": "0x...",
-  "token": null,
-  "value-in": null,
+  "token": "0x...",
+  "value-in": "USD",
   "chains": [
     {
-      "chain": "europa",
-      "chainName": "Europa Liquidity Hub",
+      "chain": "skale-base",
+      "chainName": "SKALE Base",
       "type": "skale",
       "status": "online",
       "balance": "1000000000000000000",
       "formatted": "1.0",
-      "token": null,
-      "explorerUrl": "https://explorer.europa.skale.network/address/0x..."
+      "token": {
+        "symbol": "SKL",
+        "decimals": 18
+      },
+      "explorerUrl": "https://explorer.skale-base.skale.network/address/0x..."
     }
   ],
   "summary": {
-    "totalChains": 10,
-    "onlineChains": 9,
+    "totalChains": 5,
+    "onlineChains": 4,
     "offlineChains": 1,
     "totalBalance": "5000000000000000000",
     "totalFormatted": "5.0"
@@ -126,7 +129,7 @@ Aggregate token balances across multiple chains.
 **Examples:**
 ```bash
 skale chains portfolio 0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B
-skale chains portfolio 0x... --chains europa,titan
+skale chains portfolio 0x... --chains skale-base,titan
 skale chains portfolio 0x... --token 0x... --value-in USD
 ```
 
@@ -147,15 +150,15 @@ Compare address balance across chains.
 | `--chains` | string | No | Comma-separated chain names |
 | `--format` | enum | No | Output format: text, table, json (default: json) |
 
-**Output:**
+**Output (JSON format):**
 ```json
 {
   "address": "0x...",
   "format": "json",
   "chains": [
     {
-      "chain": "europa",
-      "chainName": "Europa Liquidity Hub",
+      "chain": "skale-base",
+      "chainName": "SKALE Base",
       "type": "skale",
       "status": "online",
       "ethBalance": "1000000000000000000",
@@ -165,16 +168,23 @@ Compare address balance across chains.
     }
   ],
   "summary": {
-    "totalChains": 10,
-    "onlineChains": 9,
+    "totalChains": 5,
+    "onlineChains": 4,
     "offlineChains": 1
   }
 }
 ```
 
+**Output (text format):**
+```json
+{
+  "text": "Address: 0x...\n\n● SKALE Base (skale-base): 1.0 ETH\n○ ...\n\nOnline: 4/5 chains"
+}
+```
+
 **Examples:**
 ```bash
-skale chains compare 0x... --chains europa,titan,mainnet
+skale chains compare 0x... --chains skale-base,titan,mainnet
 skale chains compare 0x... --format table
 ```
 
@@ -190,14 +200,28 @@ List all supported chains with current status.
 | `--network` | enum | No | Filter by: skale, ethereum, all (default: all) |
 | `--status` | boolean | No | Show RPC connection status |
 
-**Output:**
+**Output (without --status):**
 ```json
 {
   "network": null,
   "chains": [
     {
-      "name": "Europa Liquidity Hub",
-      "key": "europa",
+      "name": "SKALE Base",
+      "key": "skale-base",
+      "type": "skale"
+    }
+  ]
+}
+```
+
+**Output (with --status):**
+```json
+{
+  "network": null,
+  "chains": [
+    {
+      "name": "SKALE Base",
+      "key": "skale-base",
       "type": "skale",
       "rpcOnline": true,
       "blockNumber": "12345678",
@@ -240,7 +264,7 @@ Call read-only contract methods on SKALE or Ethereum.
 **Output:**
 ```json
 {
-  "contract": { /* Contract instance object */ },
+  "contract": "<contract-instance>",
   "address": "0x...",
   "method": "version",
   "result": "1.0.0"
@@ -250,8 +274,8 @@ Call read-only contract methods on SKALE or Ethereum.
 **Examples:**
 ```bash
 # SKALE chain
-skale read configController version --chain europa
-skale read configController isAddressWhitelisted 0x... --chain europa
+skale read configController version --chain skale-base
+skale read configController isAddressWhitelisted 0x... --chain skale-base
 skale read sklToken totalSupply --network mainnet
 skale read sklToken balanceOf 0x... --network mainnet
 ```
@@ -277,8 +301,8 @@ Get SKL token information.
   "name": "SKALE",
   "symbol": "SKL",
   "decimals": 18,
-  "totalSupply": "7000000000000000000000000000",
-  "address": "0x...",
+  "totalSupply": "1000000000000000000000000000",
+  "address": "0x00c83aeCC790e8a4453e5dD3B0B4b3680501a7A7",
   "network": "mainnet",
   "networkName": "Ethereum Mainnet"
 }
@@ -337,15 +361,15 @@ Check whitelist status and access control.
 ```json
 {
   "address": "0x...",
-  "chain": "europa",
-  "chainName": "Europa Liquidity Hub",
+  "chain": "skale-base",
+  "chainName": "SKALE Base",
   "whitelisted": true
 }
 ```
 
 **Examples:**
 ```bash
-skale access 0x... --chain europa
+skale access 0x... --chain skale-base
 ```
 
 ---
@@ -364,13 +388,23 @@ Get chain ID from MessageProxy contract.
 | `--chain` | enum | Conditional | SKALE chain name |
 | `--network` | enum | Conditional | Ethereum network: mainnet, sepolia |
 
-**Output:**
+**Output (SKALE chain):**
 ```json
 {
   "schainHash": "0x...",
-  "target": "europa",
-  "targetName": "Europa Liquidity Hub",
+  "target": "skale-base",
+  "targetName": "SKALE Base",
   "contractAddress": "0x..."
+}
+```
+
+**Output (Ethereum network):**
+```json
+{
+  "target": "mainnet",
+  "targetName": "Ethereum Mainnet",
+  "contractAddress": "0x...",
+  "note": "Mainnet MessageProxy does not have a schainHash function"
 }
 ```
 
@@ -390,8 +424,8 @@ Check if a chain is connected to MessageProxy.
 **Output:**
 ```json
 {
-  "source": "europa",
-  "sourceName": "Europa Liquidity Hub",
+  "source": "skale-base",
+  "sourceName": "SKALE Base",
   "target": "mainnet",
   "isConnected": true,
   "contractAddress": "0x..."
@@ -415,16 +449,16 @@ Get deposit information for ERC20 tokens.
 ```json
 {
   "token": "0x...",
-  "tokenName": "MyToken",
-  "tokenSymbol": "MTK",
+  "tokenName": "SKALE",
+  "tokenSymbol": "SKL",
   "tokenDecimals": 18,
-  "chain": "Europa Liquidity Hub",
-  "chainId": "europa",
+  "chain": "SKALE Base",
+  "chainId": "skale-base",
   "network": "Ethereum Mainnet",
   "networkId": "mainnet",
   "automaticDeposit": true,
-  "tokenManagerAddress": "0x...",
-  "messageProxyAddress": "0x..."
+  "tokenManagerAddress": "0xD2aAA005...",
+  "messageProxyAddress": "0xd2AAa001..."
 }
 ```
 
@@ -444,13 +478,13 @@ Get withdraw information for ERC20 tokens.
 ```json
 {
   "token": "0x...",
-  "tokenName": "MyToken",
-  "tokenSymbol": "MTK",
+  "tokenName": "SKALE",
+  "tokenSymbol": "SKL",
   "tokenDecimals": 18,
-  "chain": "Europa Liquidity Hub",
-  "chainId": "europa",
-  "tokenManagerAddress": "0x...",
-  "messageProxyAddress": "0x..."
+  "chain": "SKALE Base",
+  "chainId": "skale-base",
+  "tokenManagerAddress": "0xD2aAA005...",
+  "messageProxyAddress": "0xd2AAa001..."
 }
 ```
 
@@ -471,8 +505,9 @@ Monitor deposit events from Ethereum to SKALE.
 {
   "message": "Feature coming soon",
   "feature": "monitor-deposits",
+  "description": "This will monitor deposit events from Ethereum to SKALE",
   "parameters": {
-    "chain": "europa",
+    "chain": "skale-base",
     "network": "mainnet"
   }
 }
@@ -494,8 +529,9 @@ Monitor withdrawal events from SKALE to Ethereum.
 {
   "message": "Feature coming soon",
   "feature": "monitor-withdrawals",
+  "description": "This will monitor withdrawal events from SKALE to Ethereum",
   "parameters": {
-    "chain": "europa"
+    "chain": "skale-base"
   }
 }
 ```
@@ -519,8 +555,8 @@ Get ConfigController version.
 ```json
 {
   "version": "1.0.0",
-  "chain": "europa",
-  "chainName": "Europa Liquidity Hub",
+  "chain": "skale-base",
+  "chainName": "SKALE Base",
   "contractAddress": "0x..."
 }
 ```
@@ -540,8 +576,8 @@ Check if Multi-Transaction Mode is enabled.
 ```json
 {
   "mtmEnabled": true,
-  "chain": "europa",
-  "chainName": "Europa Liquidity Hub"
+  "chain": "skale-base",
+  "chainName": "SKALE Base"
 }
 ```
 
@@ -560,8 +596,8 @@ Check if Free Contract Deployment is enabled.
 ```json
 {
   "fcdEnabled": true,
-  "chain": "europa",
-  "chainName": "Europa Liquidity Hub"
+  "chain": "skale-base",
+  "chainName": "SKALE Base"
 }
 ```
 
@@ -569,7 +605,7 @@ Check if Free Contract Deployment is enabled.
 
 ### `bite` — BITE Encryption
 
-Blockchain Integrated Threshold Encryption (BITE) commands.
+Blockchain Integrated Threshold Encryption (BITE) commands. BITE is currently available on `skale-base`, `skale-base-sepolia`, and `skale-bite-sandbox` chains.
 
 #### `bite encrypt-tx`
 
@@ -586,13 +622,15 @@ Encrypt a transaction using BITE.
 **Output:**
 ```json
 {
-  "message": "Feature coming soon",
-  "feature": "encrypt-tx",
-  "parameters": {
-    "chain": "europa",
+  "originalTransaction": {
     "to": "0x...",
     "data": "0x...",
-    "value": "1000000000000000000"
+    "value": "0"
+  },
+  "encryptedTransaction": {
+    "to": "0x42495445204d452049274d20454e435259505444",
+    "data": "0x...",
+    "gasLimit": "0x493e0"
   }
 }
 ```
@@ -612,19 +650,8 @@ Decrypt transaction data from a tx hash.
 **Output:**
 ```json
 {
-  "message": "Feature coming soon",
-  "feature": "decrypt-tx",
-  "parameters": {
-    "chain": "europa",
-    "txhash": "0x..."
-  },
-  "transactionDetails": {
-    "from": "0x...",
-    "to": "0x...",
-    "value": "1000000000000000000",
-    "data": "0x...",
-    "chainId": "europa"
-  }
+  "transactionHash": "0x...",
+  "decryptedData": "0x..."
 }
 ```
 
@@ -643,12 +670,9 @@ Encrypt a message using BITE.
 **Output:**
 ```json
 {
-  "message": "Feature coming soon",
-  "feature": "encrypt-msg",
-  "parameters": {
-    "chain": "europa",
-    "message": "Hello World"
-  }
+  "originalMessage": "Hello World",
+  "hexMessage": "0x48656c6c6f20576f726c64",
+  "encryptedMessage": "0x..."
 }
 ```
 
@@ -667,12 +691,8 @@ Decrypt a BITE encrypted message.
 **Output:**
 ```json
 {
-  "message": "Feature coming soon",
-  "feature": "decrypt-msg",
-  "parameters": {
-    "chain": "europa",
-    "ciphertext": "0x..."
-  }
+  "code": "NOT_IMPLEMENTED",
+  "message": "Direct message decryption is not supported by BITE protocol. Use decrypt-tx with a transaction hash instead."
 }
 ```
 
@@ -690,12 +710,16 @@ Get BITE protocol info for a chain.
 **Output:**
 ```json
 {
-  "chain": "europa",
-  "chainName": "Europa Liquidity Hub",
-  "biteEnabled": false,
-  "committeeInfo": null,
-  "blsPublicKey": null,
-  "epochId": null
+  "biteSupported": true,
+  "biteEnabled": true,
+  "committeeInfo": [
+    {
+      "epochId": 1,
+      "blsPublicKey": "0x..."
+    }
+  ],
+  "blsPublicKey": "0x...",
+  "epochId": 1
 }
 ```
 
@@ -727,7 +751,7 @@ Generate calldata for contract method calls.
   "parameters": ["0x...", "100"],
   "types": ["address", "uint256"],
   "selector": "0xa9059cbb",
-  "calldata": "0xa9059cbb000000000000000000000000..."
+  "calldata": "0xa9059cbb..."
 }
 ```
 
@@ -752,7 +776,7 @@ Get function selector for a method signature.
 {
   "method": "transfer(address,uint256)",
   "selector": "0xa9059cbb",
-  "fullKeccak256": "0xa9059cbb..."
+  "fullKeccak256": "0xa9059cbb2ab09eb219583f4a59a5d0623ade346d962bcd4e46b11da047c9049b"
 }
 ```
 
@@ -777,10 +801,10 @@ Encode parameters for smart contract calls.
 **Output:**
 ```json
 {
-  "type": "address",
-  "value": "0x...",
+  "type": "uint256",
+  "value": "100",
   "dynamic": false,
-  "encoded": "0x000000000000000000000000..."
+  "encoded": "0x..."
 }
 ```
 
@@ -829,8 +853,8 @@ Build unsigned transaction object.
     "maxFeePerGas": "20000000000",
     "maxPriorityFeePerGas": "2000000000"
   },
-  "serialized": "0x...",
-  "raw": "0x..."
+  "serialized": "0x02f8...",
+  "raw": "0x02f8..."
 }
 ```
 
@@ -862,14 +886,30 @@ Get ETH or token balance for an address.
 | `--network` | enum | No | Ethereum network: mainnet, sepolia |
 | `--token` | string | No | Token contract address for ERC20 balance |
 
-**Output:**
+**Output (native token):**
 ```json
 {
   "address": "0x...",
   "balance": "1000000000000000000",
   "formatted": "1.0",
-  "chain": "mainnet",
-  "chainName": "Ethereum Mainnet"
+  "chain": "skale-base",
+  "chainName": "SKALE Base"
+}
+```
+
+**Output (ERC20 token):**
+```json
+{
+  "address": "0x...",
+  "balance": "1000000000000000000",
+  "formatted": "1.0",
+  "token": {
+    "address": "0x...",
+    "symbol": "SKL",
+    "decimals": 18
+  },
+  "chain": "skale-base",
+  "chainName": "SKALE Base"
 }
 ```
 
@@ -920,8 +960,8 @@ Resolve ENS name to address or reverse resolve.
 **Output (forward resolution):**
 ```json
 {
-  "address": "0x...",
-  "ensName": "vitalik.eth",
+  "name": "vitalik.eth",
+  "address": "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
   "network": "mainnet"
 }
 ```
@@ -991,8 +1031,8 @@ Show block explorer URL for an address or transaction.
 {
   "address": "0x...",
   "type": "address",
-  "url": "https://etherscan.io/address/0x...",
-  "chain": "mainnet"
+  "url": "https://explorer.skale-base.skale.network/address/0x...",
+  "chain": "skale-base"
 }
 ```
 
@@ -1067,16 +1107,16 @@ Get current gas prices (fast/standard/slow).
 {
   "unit": "gwei",
   "current": {
-    "slow": "15.5",
+    "slow": "18.5",
     "standard": "20.0",
     "fast": "24.0"
   },
   "raw": {
-    "slow": "15500000000",
+    "slow": "18500000000",
     "standard": "20000000000",
     "fast": "24000000000"
   },
-  "baseFeePerGas": "18000000000",
+  "baseFeePerGas": "15000000000",
   "isEIP1559": true
 }
 ```
@@ -1099,12 +1139,12 @@ Get historical gas prices.
   "network": "mainnet",
   "hours": 24,
   "currentGasPrice": "20000000000",
-  "baseFeePerGas": "18000000000",
+  "baseFeePerGas": "15000000000",
   "history": [
     {
-      "timestamp": 1704067200000,
-      "gasPrice": "19000000000",
-      "speed": "current"
+      "timestamp": 1712345678000,
+      "gasPrice": "18500000000",
+      "speed": "slow"
     }
   ]
 }
@@ -1131,7 +1171,7 @@ Simulate transaction without executing (read-only).
 | `--from` | string | No | Sender address |
 | `--block` | number | No | Block number to simulate at |
 
-**Output:**
+**Output (success):**
 ```json
 {
   "success": true,
@@ -1140,12 +1180,27 @@ Simulate transaction without executing (read-only).
     "to": "0x...",
     "value": "1000000000000000000",
     "data": "0x",
-    "from": null
+    "from": "0x..."
   },
   "gasUsed": "21000",
   "gasUsedWithBuffer": "23100",
   "result": null,
   "status": "success"
+}
+```
+
+**Output (failure):**
+```json
+{
+  "success": false,
+  "transaction": {
+    "to": "0x...",
+    "value": "1000000000000000000",
+    "data": "0x",
+    "from": "0x..."
+  },
+  "error": "execution reverted: ...",
+  "status": "reverted"
 }
 ```
 
@@ -1177,7 +1232,7 @@ Get transaction details and construct explorer URL.
   "status": "success",
   "blockNumber": "12345678",
   "blockHash": "0x...",
-  "timestamp": "2024-01-01T00:00:00.000Z",
+  "timestamp": "2024-01-15T12:34:56.000Z",
   "from": "0x...",
   "to": "0x...",
   "value": "1000000000000000000",
@@ -1187,9 +1242,9 @@ Get transaction details and construct explorer URL.
   "formattedGasPrice": "0.00000002",
   "inputData": "0x",
   "transactionIndex": "0",
-  "chain": "mainnet",
-  "chainName": "Ethereum Mainnet",
-  "explorerUrl": "https://etherscan.io/tx/0x..."
+  "chain": "skale-base",
+  "chainName": "SKALE Base",
+  "explorerUrl": "https://explorer.skale-base.skale.network/tx/0x..."
 }
 ```
 
@@ -1220,9 +1275,9 @@ Get address details and explorer URL.
   "transactionCount": "42",
   "codeVerified": "not-a-contract",
   "code": null,
-  "chain": "mainnet",
-  "chainName": "Ethereum Mainnet",
-  "explorerUrl": "https://etherscan.io/address/0x..."
+  "chain": "skale-base",
+  "chainName": "SKALE Base",
+  "explorerUrl": "https://explorer.skale-base.skale.network/address/0x..."
 }
 ```
 
@@ -1250,17 +1305,17 @@ Get block details and explorer URL.
   "number": "12345678",
   "hash": "0x...",
   "parentHash": "0x...",
-  "timestamp": "2024-01-01T00:00:00.000Z",
+  "timestamp": "2024-01-15T12:34:56.000Z",
   "transactionsCount": "150",
   "gasUsed": "15000000",
   "gasLimit": "30000000",
   "miner": "0x...",
   "size": "45000",
   "difficulty": "0",
-  "totalDifficulty": "12345678901234567890",
-  "chain": "mainnet",
-  "chainName": "Ethereum Mainnet",
-  "explorerUrl": "https://etherscan.io/block/12345678"
+  "totalDifficulty": "0",
+  "chain": "skale-base",
+  "chainName": "SKALE Base",
+  "explorerUrl": "https://explorer.skale-base.skale.network/block/12345678"
 }
 ```
 
@@ -1289,11 +1344,11 @@ Get contract info and explorer URL.
   "type": "Contract",
   "hasCode": true,
   "codeVerification": "has-code",
-  "codeLength": "24576",
-  "chain": "mainnet",
-  "chainName": "Ethereum Mainnet",
-  "explorerUrl": "https://etherscan.io/address/0x...",
-  "codeExplorerUrl": "https://etherscan.io/address/0x...#code"
+  "codeLength": "1234",
+  "chain": "skale-base",
+  "chainName": "SKALE Base",
+  "explorerUrl": "https://explorer.skale-base.skale.network/address/0x...",
+  "codeExplorerUrl": "https://explorer.skale-base.skale.network/address/0x...#code"
 }
 ```
 
@@ -1323,11 +1378,11 @@ Check contract source code information.
 {
   "address": "0x...",
   "isContract": true,
-  "codeSizeBytes": "24576",
-  "verificationNote": "Contract verification status cannot be queried via RPC...",
-  "explorerUrl": "https://explorer.nebula.skale.network/address/0x...",
-  "chain": "nebula",
-  "chainName": "Nebula Gaming Hub"
+  "codeSizeBytes": "1234",
+  "verificationNote": "Contract verification status cannot be queried via RPC. Use the block explorer to verify source code.",
+  "explorerUrl": "https://explorer.skale-base.skale.network/address/0x...",
+  "chain": "skale-base",
+  "chainName": "SKALE Base"
 }
 ```
 
@@ -1352,15 +1407,15 @@ Check ERC standard compliance (ERC20, ERC721, ERC165).
 ```json
 {
   "address": "0x...",
-  "chain": "nebula",
-  "chainName": "Nebula Gaming Hub",
+  "chain": "skale-base",
+  "chainName": "SKALE Base",
   "detectedStandards": ["ERC20", "ERC165"],
   "erc20": {
     "methods": ["name", "symbol", "decimals", "totalSupply", "balanceOf", "transfer", "approve", "allowance"]
   },
   "erc721": null,
   "erc165": true,
-  "complianceScore": 150,
+  "complianceScore": 250,
   "hasCode": true
 }
 ```
@@ -1387,15 +1442,15 @@ Get contract interface details (read/write functions and events).
 ```json
 {
   "address": "0x...",
-  "chain": "nebula",
-  "chainName": "Nebula Gaming Hub",
+  "chain": "skale-base",
+  "chainName": "SKALE Base",
   "outputFormat": "text",
   "readFunctionsCount": 5,
   "writeFunctionsCount": 3,
-  "eventsCount": 2,
+  "eventsCount": 4,
   "readFunctions": ["name", "symbol", "decimals", "totalSupply", "balanceOf"],
   "writeFunctions": ["transfer", "approve", "transferFrom"],
-  "events": ["Transfer", "Approval"]
+  "events": ["Transfer", "Approval", "ApprovalForAll"]
 }
 ```
 
@@ -1403,8 +1458,8 @@ Get contract interface details (read/write functions and events).
 ```json
 {
   "address": "0x...",
-  "chain": "nebula",
-  "chainName": "Nebula Gaming Hub",
+  "chain": "skale-base",
+  "chainName": "SKALE Base",
   "outputFormat": "abi",
   "abi": [
     { "type": "function", "name": "name", "stateMutability": "view", "inputs": [], "outputs": [] },
@@ -1439,6 +1494,7 @@ export RPC_URL=https://your-rpc-url
 - `nebula-testnet` — Nebula Testnet
 - `titan-testnet` — Titan Testnet
 - `skale-base-sepolia` — SKALE Base Sepolia
+- `skale-bite-sandbox` — SKALE BITE Sandbox
 
 ### Ethereum Networks
 - `mainnet` — Ethereum Mainnet
