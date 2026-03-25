@@ -39,21 +39,26 @@ jobs:
         id: version
         run: |
           BRANCH=${GITHUB_REF##*/}
+          BASE_VERSION=$(node -p "require('./package.json').version")
           
           if [[ "$BRANCH" == "main" ]]; then
-            NPM_TAG="latest"
-            PRERELEASE="false"
+            # Main: clean version, no prerelease suffix
+            echo "VERSION=$BASE_VERSION" >> $GITHUB_ENV
+            echo "NPM_TAG=latest" >> $GITHUB_ENV
+            echo "PRERELEASE=false" >> $GITHUB_ENV
           else
-            NPM_TAG="beta"
-            PRERELEASE="true"
+            # Staging: prerelease version with incrementing number
+            git fetch --tags
+            for (( NUMBER=0; ; NUMBER++ )); do
+              FULL_VERSION="$BASE_VERSION-$BRANCH.$NUMBER"
+              if ! git tag -l | grep -q "$FULL_VERSION"; then
+                echo "VERSION=$FULL_VERSION" >> $GITHUB_ENV
+                break
+              fi
+            done
+            echo "NPM_TAG=beta" >> $GITHUB_ENV
+            echo "PRERELEASE=true" >> $GITHUB_ENV
           fi
-          
-          VERSION=$(node -p "require('./package.json').version")
-          FULL_VERSION=$(BRANCH=$BRANCH VERSION=$VERSION bash ./scripts/calculate_version.sh)
-          
-          echo "VERSION=$FULL_VERSION" >> $GITHUB_ENV
-          echo "NPM_TAG=$NPM_TAG" >> $GITHUB_ENV
-          echo "PRERELEASE=$PRERELEASE" >> $GITHUB_ENV
 
       - name: Update package version
         run: npm version --no-git-tag-version $VERSION
