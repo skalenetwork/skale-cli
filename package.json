@@ -3,7 +3,7 @@
   "version": "0.1.2",
   "type": "module",
   "private": false,
-  "description": "SKALE Network CLI Tool for developers and chain owners",
+  "description": "SKALE Network CLI Tool for developers, chain operators, and agents",
   "scripts": {
     "dev": "bun run src/index.ts",
     "build": "bun build src/index.ts --compile --outfile dist/skale --target bun",
@@ -14,11 +14,20 @@
   },
   "keywords": [
     "skale",
+    "skale-network",
     "web3",
     "blockchain",
+    "ethereum",
+    "layer2",
     "cli",
+    "cli-tool",
     "dev",
-    "chain"
+    "chain",
+    "ai",
+    "agents",
+    "mcp",
+    "automation",
+    "ai-agents"
   ],
   "author": "Sawyer Cutler <sawyer@dirtroad.dev>",
   "license": "MIT",

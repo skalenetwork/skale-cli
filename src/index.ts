@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { Cli } from "incur"
+import pkg from "../package.json" with { type: "json" }
 import { read } from "./commands/read.js"
 import { token } from "./commands/token.js"
 import { access } from "./commands/access.js"
@@ -16,7 +17,7 @@ import { contract } from "./commands/contract.js"
 const cli = Cli
   .create("skale", {
     description: "SKALE Network CLI - read contract data from SKALE chains and Ethereum",
-    version: "0.2.0",
+    version: pkg.version,
   })
   .command(read)
   .command(token)
