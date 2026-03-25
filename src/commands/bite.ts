@@ -21,8 +21,8 @@ export const bite = Cli
       value: z.string().optional().describe("ETH value in wei"),
     }),
     examples: [
-      { command: "bite encrypt-tx --chain skale-base --to 0x1234567890123456789012345678901234567890", description: "Encrypt a transaction to an address" },
-      { command: "bite encrypt-tx --chain skale-base --to 0x1234567890123456789012345678901234567890 --data 0xa9059cbb000000000000000000000000...", description: "Encrypt a transaction with data" },
+      { options: { chain: "skale-base", to: "0x1234567890123456789012345678901234567890" }, description: "Encrypt a transaction to an address" },
+      { options: { chain: "skale-base", to: "0x1234567890123456789012345678901234567890", data: "0xa9059cbb000000000000000000000000..." }, description: "Encrypt a transaction with data" },
     ],
     async run(c) {
       const { chain, to, data, value } = c.options
@@ -71,7 +71,7 @@ export const bite = Cli
       txhash: z.string().regex(/^0x[a-fA-F0-9]{64}$/).describe("Transaction hash"),
     }),
     examples: [
-      { command: "bite decrypt-tx --chain skale-base --txhash 0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef", description: "Decrypt a BITE-encrypted transaction" },
+      { options: { chain: "skale-base", txhash: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef" }, description: "Decrypt a BITE-encrypted transaction" },
     ],
     async run(c) {
       const { chain, txhash } = c.options
@@ -107,7 +107,7 @@ export const bite = Cli
       message: z.string().describe("Message to encrypt (will be hex-encoded)"),
     }),
     examples: [
-      { command: "bite encrypt-msg --chain skale-base --message \"Hello World\"", description: "Encrypt a message" },
+      { options: { chain: "skale-base", message: "Hello World" }, description: "Encrypt a message" },
     ],
     async run(c) {
       const { chain, message } = c.options
@@ -147,7 +147,7 @@ export const bite = Cli
       ciphertext: z.string().regex(/^0x[a-fA-F0-9]+$/).describe("Encrypted message (hex)"),
     }),
     examples: [
-      { command: "bite decrypt-msg --chain skale-base --ciphertext 0x...", description: "Decrypt an encrypted message" },
+      { options: { chain: "skale-base", ciphertext: "0x..." }, description: "Decrypt an encrypted message" },
     ],
     async run(c) {
       const { chain } = c.options
@@ -171,7 +171,7 @@ export const bite = Cli
       chain: skaleChainEnum.describe("SKALE chain name"),
     }),
     examples: [
-      { command: "bite info --chain skale-base", description: "Get BITE protocol info for SKALE Base" },
+      { options: { chain: "skale-base" }, description: "Get BITE protocol info for SKALE Base" },
     ],
     async run(c) {
       const { chain } = c.options
