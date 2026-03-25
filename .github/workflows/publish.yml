@@ -1,0 +1,81 @@
+name: Publish Package
+
+on:
+  push:
+    branches:
+      - main
+      - staging
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org/'
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build
+        run: bun run build
+
+      - name: Set version and tag
+        id: version
+        run: |
+          BRANCH=${GITHUB_REF##*/}
+          
+          if [[ "$BRANCH" == "main" ]]; then
+            NPM_TAG="latest"
+            PRERELEASE="false"
+          else
+            NPM_TAG="beta"
+            PRERELEASE="true"
+          fi
+          
+          VERSION=$(node -p "require('./package.json').version")
+          FULL_VERSION=$(BRANCH=$BRANCH VERSION=$VERSION bash ./scripts/calculate_version.sh)
+          
+          echo "VERSION=$FULL_VERSION" >> $GITHUB_ENV
+          echo "NPM_TAG=$NPM_TAG" >> $GITHUB_ENV
+          echo "PRERELEASE=$PRERELEASE" >> $GITHUB_ENV
+
+      - name: Update package version
+        run: npm version --no-git-tag-version $VERSION
+
+      - name: Publish to npm (main)
+        if: github.ref == 'refs/heads/main'
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish to npm (staging)
+        if: github.ref != 'refs/heads/main'
+        run: npm publish --access public --tag ${{ env.NPM_TAG }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub Release
+        uses: actions/create-release@latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.VERSION }}
+          release_name: ${{ env.VERSION }}
+          draft: false
+          prerelease: ${{ env.PRERELEASE == 'true' }}
