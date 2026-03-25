@@ -40,19 +40,28 @@ jobs:
             PRERELEASE="true"
           fi
           
-          VERSION=$(node -p "require('./package.json').version")
+          VERSION=$(bun -e "console.log(require('./package.json').version)")
           FULL_VERSION=$(BRANCH=$BRANCH VERSION=$VERSION bash ./scripts/calculate_version.sh)
           
           echo "VERSION=$FULL_VERSION" >> $GITHUB_ENV
           echo "NPM_TAG=$NPM_TAG" >> $GITHUB_ENV
           echo "PRERELEASE=$PRERELEASE" >> $GITHUB_ENV
 
-      - name: Publish to npm
+      - name: Update package version
         run: |
-          npm version --no-git-tag-version $VERSION
-          npm publish --access public --tag ${{ env.NPM_TAG }}
+          bun -e "const fs = require('fs'); const pkg = JSON.parse(fs.readFileSync('./package.json')); pkg.version = '$VERSION'; fs.writeFileSync('./package.json', JSON.stringify(pkg, null, 2));"
+
+      - name: Publish to npm (main)
+        if: github.ref == 'refs/heads/main'
+        run: bun publish --access public
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          BUN_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish to npm (staging)
+        if: github.ref != 'refs/heads/main'
+        run: bun publish --access public --tag ${{ env.NPM_TAG }}
+        env:
+          BUN_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
