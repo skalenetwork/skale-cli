@@ -31,6 +31,9 @@
   ],
   "author": "Sawyer Cutler <sawyer@dirtroad.dev>",
   "license": "MIT",
+  "files": [
+    "dist/"
+  ],
   "dependencies": {
     "@skalenetwork/bite": "^0.7.2",
     "incur": "^0.1.12",
