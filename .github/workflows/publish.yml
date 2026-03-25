@@ -42,7 +42,7 @@ jobs:
           BASE_VERSION=$(node -p "require('./package.json').version")
           
           if [[ "$BRANCH" == "main" ]]; then
-            # Main: clean version, no prerelease suffix
+            # Main: use package.json version as-is (bump locally before pushing)
             echo "VERSION=$BASE_VERSION" >> $GITHUB_ENV
             echo "NPM_TAG=latest" >> $GITHUB_ENV
             echo "PRERELEASE=false" >> $GITHUB_ENV
@@ -61,7 +61,13 @@ jobs:
           fi
 
       - name: Update package version
-        run: npm version --no-git-tag-version $VERSION
+        run: |
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          if [[ "$CURRENT_VERSION" != "$VERSION" ]]; then
+            npm version --no-git-tag-version $VERSION
+          else
+            echo "Version already set to $VERSION, skipping npm version"
+          fi
 
       - name: Publish to npm (main)
         if: github.ref == 'refs/heads/main'
