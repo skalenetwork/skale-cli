@@ -3,6 +3,10 @@
   "version": "0.1.11",
   "type": "module",
   "private": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/skalenetwork/skale-cli.git"
+  },
   "description": "SKALE Network CLI Tool for developers, chain operators, and agents",
   "scripts": {
     "dev": "bun run src/index.ts",
