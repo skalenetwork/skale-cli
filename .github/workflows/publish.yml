@@ -10,7 +10,8 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write   # create GitHub releases
+      id-token: write   # npm trusted publishing (OIDC)
 
     steps:
       - name: Checkout code
@@ -28,6 +29,9 @@ jobs:
         with:
           node-version: '24'
           registry-url: 'https://registry.npmjs.org/'
+
+      - name: Update npm (trusted publishing requires >= 11.5.1)
+        run: npm install -g npm@latest
 
       - name: Install dependencies
         run: bun install
@@ -72,14 +76,10 @@ jobs:
       - name: Publish to npm (main)
         if: github.ref == 'refs/heads/main'
         run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish to npm (staging)
         if: github.ref != 'refs/heads/main'
         run: npm publish --access public --tag ${{ env.NPM_TAG }}
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create GitHub Release
         uses: actions/create-release@latest
